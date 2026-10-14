@@ -4,6 +4,7 @@ import {
   generateMilestones,
   getUpcomingWindow,
   getWindow,
+  glowStrength,
   localDate,
   uniqueFractions,
 } from "../milestones.js";
@@ -17,6 +18,15 @@ assert.equal(fractions.at(-1).denominator, 1);
 assert.equal(new Set(fractions.map(({ value }) => value)).size, 46);
 assert.ok(fractions.every(({ numerator, denominator }) => numerator <= denominator));
 assert.ok(fractions.every(({ numerator, denominator }) => denominator <= 12));
+
+assert.equal(glowStrength("1/1"), 1);
+assert.equal(glowStrength("1/2"), 2 / 3);
+assert.equal(glowStrength("2/3"), 1 / 2);
+assert.equal(glowStrength("3/4"), 1 / 2);
+assert.equal(glowStrength("5/6"), 1 / 3);
+assert.equal(glowStrength("11/12"), 1 / 4);
+assert.equal(glowStrength("4/5"), 0);
+assert.equal(glowStrength("10/11"), 0);
 
 assert.equal(cappedDate(2025, 1, 29).toISOString().slice(0, 10), "2025-02-28");
 assert.equal(cappedDate(2024, 1, 29).toISOString().slice(0, 10), "2024-02-29");

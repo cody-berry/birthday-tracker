@@ -1,4 +1,4 @@
-import { generateMilestones, getUpcomingWindow, getWindow, toDateKey, uniqueFractions } from "./milestones.js";
+import { generateMilestones, getUpcomingWindow, getWindow, glowStrength, toDateKey, uniqueFractions } from "./milestones.js";
 
 const STORAGE_KEY = "fractional-birthdays-v2";
 const COLORS = ["#ff6b3d", "#8d7cff", "#2dd4bf", "#f4c95d", "#ec77a8", "#6db5ff", "#c084fc", "#84cc16", "#fb7185", "#22d3ee", "#f97316", "#a3e635"];
@@ -58,9 +58,6 @@ function formatAge(age) {
 }
 function daysFromToday(date) { return Math.round((Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) - Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())) / 86_400_000); }
 function relativeLabel(date) { const days = daysFromToday(date); if (days === 0) return "Today"; if (days === 1) return "Tomorrow"; if (days < 7) return `In ${days} days`; return longDate.format(date); }
-function glowStrength(label) {
-  return ({ "1/1": 1, "1/2": 2 / 3, "1/3": 1 / 2, "1/4": 1 / 2, "1/6": 1 / 3, "1/12": 1 / 4 })[label] || 0;
-}
 function glowColor(hex, strength) {
   const value = Number.parseInt(hex.slice(1), 16);
   return `rgba(${value >> 16}, ${(value >> 8) & 255}, ${value & 255}, ${(0.72 * strength).toFixed(3)})`;
@@ -102,12 +99,18 @@ function renderCalendar(events) {
     themeSystem: "monarch", initialView: "dayGridMonth", initialDate: today,
     validRange: { start: toDateKey(windowRange.start), end: toDateKey(windowRange.end) },
     headerToolbar: { left: "prev", center: "title", right: "next" }, height: "auto", fixedWeekCount: false, showNonCurrentDates: false, dayMaxEvents: 3,
-    events: events.map((event) => ({ id: event.id, title: `${event.personName} · ${event.label}`, start: event.dateKey, allDay: true, backgroundColor: event.color, borderColor: event.color, textColor: "#08090c", classNames: glowStrength(event.label) ? ["fraction-glow"] : [], extendedProps: { glowStrength: glowStrength(event.label), glowColor: glowColor(event.color, glowStrength(event.label)) } })),
+    events: events.map((event) => ({ id: event.id, title: `${event.personName} · ${event.label}`, start: event.dateKey, allDay: true, backgroundColor: "transparent", borderColor: "transparent", textColor: "#f5f2eb", extendedProps: { color: event.color, glowStrength: glowStrength(event.label), glowColor: glowColor(event.color, glowStrength(event.label)) } })),
     eventDidMount(info) {
-      const strength = info.event.extendedProps.glowStrength;
-      if (!strength) return;
-      info.el.style.setProperty("--glow-strength", strength);
-      info.el.style.setProperty("--event-glow", info.event.extendedProps.glowColor);
+      info.el.classList.add("calendar-event-wrapper");
+      info.el.style.setProperty("--fc-event-color", "transparent");
+      info.el.style.setProperty("--fc-event-contrast-color", "#f5f2eb");
+    },
+    eventContent(info) {
+      const { color, glowStrength: strength, glowColor: eventGlow } = info.event.extendedProps;
+      const glowClass = strength ? " calendar-event-dot--glow" : "";
+      const contentGlowClass = strength ? " calendar-event-content--glow" : "";
+      const glowStyle = strength ? `--glow-strength:${strength};--event-glow:${eventGlow};` : "";
+      return { html: `<span class="calendar-event-content${contentGlowClass}" style="--event-color:${color};${glowStyle}"><i class="calendar-event-dot${glowClass}" style="--person-color:${color};${glowStyle}"></i><span>${escapeHtml(info.event.title)}</span></span>` };
     },
   });
   calendar.render();

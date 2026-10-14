@@ -19,6 +19,11 @@ export function uniqueFractions(maxDenominator = 12) {
   return fractions.sort((a, b) => a.value - b.value || a.denominator - b.denominator);
 }
 
+export function glowStrength(label) {
+  const denominator = Number(String(label).split("/")[1]);
+  return ({ 1: 1, 2: 2 / 3, 3: 1 / 2, 4: 1 / 2, 6: 1 / 3, 12: 1 / 4 })[denominator] || 0;
+}
+
 export function localDate(year, month, day) {
   return new Date(year, month, day, 12, 0, 0, 0);
 }
