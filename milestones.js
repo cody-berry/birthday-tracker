@@ -101,3 +101,11 @@ export function getWindow(today = new Date()) {
     end: addMonths(currentMonth, 14),
   };
 }
+
+export function getUpcomingWindow(today = new Date()) {
+  const start = localDate(today.getFullYear(), today.getMonth(), today.getDate());
+  return {
+    start,
+    end: cappedDate(today.getFullYear(), today.getMonth() + 2, today.getDate()),
+  };
+}

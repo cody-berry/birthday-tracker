@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import {
   cappedDate,
   generateMilestones,
+  getUpcomingWindow,
   getWindow,
   localDate,
   uniqueFractions,
-} from "../dist/milestones.js";
+} from "../milestones.js";
 
 const fractions = uniqueFractions();
 assert.equal(fractions.length, 46, "there should be exactly 46 unique reduced fractions");
@@ -24,6 +25,12 @@ assert.equal(cappedDate(2025, 1, 31).toISOString().slice(0, 10), "2025-02-28");
 const windowRange = getWindow(localDate(2026, 9, 13));
 assert.equal(windowRange.start.toISOString().slice(0, 10), "2026-09-01");
 assert.equal(windowRange.end.toISOString().slice(0, 10), "2027-12-01");
+
+const upcomingWindow = getUpcomingWindow(localDate(2026, 9, 13));
+assert.equal(upcomingWindow.start.toISOString().slice(0, 10), "2026-10-13");
+assert.equal(upcomingWindow.end.toISOString().slice(0, 10), "2026-12-13");
+assert.equal(getUpcomingWindow(localDate(2027, 11, 31)).end.toISOString().slice(0, 10), "2028-02-29");
+assert.equal(getUpcomingWindow(localDate(2026, 11, 31)).end.toISOString().slice(0, 10), "2027-02-28");
 
 const events = generateMilestones(windowRange.start, windowRange.end);
 assert.ok(events.length > 46, "a 15-month window should include more than one cycle of milestones");

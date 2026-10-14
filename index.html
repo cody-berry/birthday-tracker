@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Track fractional birthday milestones for everyone you care about." />
+  <title>Birthday, by fractions</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.2/skeleton.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.2/themes/monarch/theme.css" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="shell" id="top">
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Birthday, by fractions home"><span class="brand-mark" aria-hidden="true">½</span><span>Birthday, by fractions</span></a>
+      <p class="header-note">Every person · 46 milestones a year</p>
+    </header>
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div><p class="eyebrow">Fractional birthday tracker</p><h1 id="hero-title">Celebrate all the days in between.</h1><p class="lede">Keep the birthdays that matter in one place and see every distinct fractional milestone—from one twelfth to one whole.</p></div>
+        <div class="metric-card" aria-label="Tracker summary"><span>Tracking</span><strong id="birthday-count">0</strong><p id="birthday-count-label">birthdays across 0 yearly milestones</p></div>
+      </section>
+      <section class="people-panel" aria-labelledby="people-title">
+        <div class="section-heading"><div><p class="eyebrow">Your people</p><h2 id="people-title">Birthdays being tracked</h2></div></div>
+        <form id="birthday-form" class="birthday-form">
+          <label><span>Name</span><input id="person-name" name="name" autocomplete="name" placeholder="e.g. Maya" required /></label>
+          <label class="color-field"><span>Color</span><input id="person-color" name="color" type="color" value="#ff6b3d" aria-label="Birthday color" /></label>
+          <fieldset class="birthday-fields">
+            <legend>Birthday</legend>
+            <label><span class="sr-only">Month</span><input id="birthday-month" name="month" type="number" min="1" max="12" inputmode="numeric" placeholder="Month" required /></label>
+            <label><span class="sr-only">Day</span><input id="birthday-day" name="day" type="number" min="1" max="31" inputmode="numeric" placeholder="Day" required /></label>
+            <label><span class="sr-only">Year</span><input id="birthday-year" name="year" type="number" min="1" max="9999" inputmode="numeric" placeholder="Year" required /></label>
+          </fieldset>
+          <label class="whole-only-field"><input id="whole-only" name="wholeOnly" type="checkbox" /><span>Real birthday only</span></label>
+          <button type="submit" id="submit-birthday">Add birthday</button>
+          <button type="button" class="cancel-button" id="cancel-edit" hidden>Cancel</button>
+        </form>
+        <p class="form-error" id="birthday-error" role="alert"></p>
+        <div class="people-list" id="people-list" aria-live="polite"></div>
+        <details class="config-panel">
+          <summary>Portable config</summary>
+          <p>Copy this configuration to move your birthdays to another browser, or paste one here to load it.</p>
+          <textarea id="config-data" spellcheck="false" aria-label="Birthday configuration" placeholder="Paste birthday configuration JSON"></textarea>
+          <div class="config-actions">
+            <button type="button" id="copy-config">Copy current config</button>
+            <button type="button" id="load-config">Load pasted config</button>
+          </div>
+          <p class="config-status" id="config-status" role="status"></p>
+        </details>
+      </section>
+      <section class="events-panel" aria-labelledby="events-title">
+        <div class="events-heading">
+          <div><p class="eyebrow">Milestones</p><h2 id="events-title">What’s coming up</h2><p class="panel-range" id="view-range"></p></div>
+          <div class="view-toggle" role="group" aria-label="Choose milestone view">
+            <button class="view-toggle__button is-active" id="show-list" type="button" aria-pressed="true">List</button>
+            <button class="view-toggle__button" id="show-calendar" type="button" aria-pressed="false">Month</button>
+          </div>
+        </div>
+        <div class="view-panel" id="list-view"><div class="list-summary"><span>Starting today</span><strong><span id="event-count">—</span> events</strong></div><div class="event-list" id="event-list" aria-live="polite"></div></div>
+        <div class="view-panel" id="calendar-view" hidden><div class="calendar-actions"><button class="today-button" id="today-button" type="button">Today</button></div><div id="calendar" aria-label="Monthly fractional birthday calendar"></div></div>
+      </section>
+      <section class="method" aria-labelledby="method-title">
+        <p class="eyebrow">How it works</p><h2 id="method-title">Forty-six distinct moments for every birthday.</h2>
+        <p>Equivalent fractions land on the same milestone, so 1/2, 2/4, and 6/12 count once. Twelfth-aligned markers keep each person’s birth day-of-month, capped at month end. Every other fraction belongs to the calendar day containing its exact position between anniversaries.</p>
+        <div class="fraction-strip" id="fraction-strip" aria-label="All 46 unique fractions"></div>
+      </section>
+    </main>
+    <footer><span>More reasons to remember someone.</span><a href="#top">Back to top ↑</a></footer>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.2/all/global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.2/themes/monarch/global.js"></script>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
