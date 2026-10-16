@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import {
+  calendarAge,
   cappedDate,
   generateMilestones,
   getUpcomingWindow,
   getWindow,
   glowStrength,
+  isMonthlyFraction,
   localDate,
   uniqueFractions,
 } from "../milestones.js";
@@ -16,8 +18,15 @@ assert.equal(fractions[0].denominator, 12);
 assert.equal(fractions.at(-1).numerator, 1);
 assert.equal(fractions.at(-1).denominator, 1);
 assert.equal(new Set(fractions.map(({ value }) => value)).size, 46);
+assert.equal(fractions.filter(isMonthlyFraction).length, 12, "monthly mode should contain twelve milestones");
 assert.ok(fractions.every(({ numerator, denominator }) => numerator <= denominator));
 assert.ok(fractions.every(({ numerator, denominator }) => denominator <= 12));
+
+assert.deepEqual(
+  calendarAge({ year: 2024, month: 1, day: 29 }, localDate(2025, 2, 10)),
+  { totalDays: 375, years: 1, days: 10 },
+  "leap-day ages should use absolute elapsed days and a capped anniversary",
+);
 
 assert.equal(glowStrength("1/1"), 1);
 assert.equal(glowStrength("1/2"), 2 / 3);

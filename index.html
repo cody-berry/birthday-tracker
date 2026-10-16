@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Track fractional birthday milestones for everyone you care about." />
+  <meta name="description" content="Track 46 fractional birthday milestones for everyone you care about." />
   <title>Birthday, by fractions</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -16,17 +16,17 @@
   <div class="shell" id="top">
     <header class="site-header">
       <a class="brand" href="#top" aria-label="Birthday, by fractions home"><span class="brand-mark" aria-hidden="true">½</span><span>Birthday, by fractions</span></a>
-      <p class="header-note">Every person · 46 milestones a year</p>
+      <p class="header-note">Annual · monthly · fractional</p>
     </header>
     <main>
       <section class="hero" aria-labelledby="hero-title">
-        <div><p class="eyebrow">Fractional birthday tracker</p><h1 id="hero-title">Celebrate all the days in between.</h1><p class="lede">Keep the birthdays that matter in one place and see every distinct fractional milestone—from one twelfth to one whole.</p></div>
-        <div class="metric-card" aria-label="Tracker summary"><span>Tracking</span><strong id="birthday-count">0</strong><p id="birthday-count-label">birthdays across 0 yearly milestones</p></div>
+        <div><p class="eyebrow">Fractional birthday tracker</p><h1 id="hero-title">You don’t have to celebrate only on your birthday.</h1><p class="lede">46 excuses to celebrate for every person.</p></div>
+        <aside class="up-next up-next--hero" aria-labelledby="up-next-title"><div class="up-next__heading"><h2 id="up-next-title">Up next</h2><span>Next 7 days</span></div><div class="up-next__events" id="up-next-events" aria-live="polite"></div></aside>
       </section>
       <section class="people-panel" aria-labelledby="people-title">
         <div class="section-heading"><div><p class="eyebrow">Your people</p><h2 id="people-title">Birthdays being tracked</h2></div></div>
         <form id="birthday-form" class="birthday-form">
-          <label><span>Name</span><input id="person-name" name="name" autocomplete="name" placeholder="e.g. Maya" required /></label>
+          <label class="name-field"><span>Name</span><input id="person-name" name="name" autocomplete="name" placeholder="e.g. Maya" required /></label>
           <label class="color-field"><span>Color</span><input id="person-color" name="color" type="color" value="#ff6b3d" aria-label="Birthday color" /></label>
           <fieldset class="birthday-fields">
             <legend>Birthday</legend>
@@ -34,7 +34,7 @@
             <label><span class="sr-only">Day</span><input id="birthday-day" name="day" type="number" min="1" max="31" inputmode="numeric" placeholder="Day" required /></label>
             <label><span class="sr-only">Year</span><input id="birthday-year" name="year" type="number" min="1" max="9999" inputmode="numeric" placeholder="Year" required /></label>
           </fieldset>
-          <label class="whole-only-field"><input id="whole-only" name="wholeOnly" type="checkbox" /><span>Real birthday only</span></label>
+          <label class="mode-field"><span>Milestones</span><select id="milestone-mode" name="milestoneMode"><option value="annual">Real birthday only</option><option value="monthly">12 monthly birthdays</option><option value="fractional" selected>46 fractional birthdays</option></select></label>
           <button type="submit" id="submit-birthday">Add birthday</button>
           <button type="button" class="cancel-button" id="cancel-edit" hidden>Cancel</button>
         </form>
@@ -64,11 +64,11 @@
       </section>
       <section class="method" aria-labelledby="method-title">
         <p class="eyebrow">How it works</p><h2 id="method-title">Forty-six distinct moments for every birthday.</h2>
-        <p>Equivalent fractions land on the same milestone, so 1/2, 2/4, and 6/12 count once. Twelfth-aligned markers keep each person’s birth day-of-month, capped at month end. Every other fraction belongs to the calendar day containing its exact position between anniversaries.</p>
+        <p>Milestones that fall on a whole number of twelfths keep the birth day of the month and are highlighted in the tracker. All other fractional birthdays preserve their exact position between anniversaries, with leap years accounted for.</p>
         <div class="fraction-strip" id="fraction-strip" aria-label="All 46 unique fractions"></div>
       </section>
     </main>
-    <footer><span>More reasons to remember someone.</span><a href="#top">Back to top ↑</a></footer>
+    <footer><span>More reasons to remember someone.</span></footer>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.2/all/global.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.2/themes/monarch/global.js"></script>

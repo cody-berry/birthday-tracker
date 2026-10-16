@@ -24,6 +24,10 @@ export function glowStrength(label) {
   return ({ 1: 1, 2: 2 / 3, 3: 1 / 2, 4: 1 / 2, 6: 1 / 3, 12: 1 / 4 })[denominator] || 0;
 }
 
+export function isMonthlyFraction(event) {
+  return (12 * event.numerator) % event.denominator === 0;
+}
+
 export function localDate(year, month, day) {
   return new Date(year, month, day, 12, 0, 0, 0);
 }
@@ -51,6 +55,23 @@ export function toDateKey(date) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+export function calendarAge(birthday, onDate = new Date()) {
+  const birthDate = localDate(birthday.year, birthday.month, birthday.day);
+  const currentDate = localDate(onDate.getFullYear(), onDate.getMonth(), onDate.getDate());
+  const utcDay = (date) => Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  const daysBetween = (start, end) => Math.round((utcDay(end) - utcDay(start)) / 86_400_000);
+  const totalDays = daysBetween(birthDate, currentDate);
+  if (totalDays < 0) return { totalDays, years: 0, days: 0 };
+
+  let years = currentDate.getFullYear() - birthday.year;
+  let anniversary = cappedDate(birthday.year + years, birthday.month, birthday.day);
+  if (anniversary > currentDate) {
+    years -= 1;
+    anniversary = cappedDate(birthday.year + years, birthday.month, birthday.day);
+  }
+  return { totalDays, years, days: daysBetween(anniversary, currentDate) };
 }
 
 export function generateMilestones(rangeStart, rangeEnd, birthday = BIRTHDAY) {

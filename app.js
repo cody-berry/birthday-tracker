@@ -1,4 +1,4 @@
-import { generateMilestones, getUpcomingWindow, getWindow, glowStrength, toDateKey, uniqueFractions } from "./milestones.js";
+import { calendarAge, generateMilestones, getUpcomingWindow, getWindow, glowStrength, isMonthlyFraction, toDateKey, uniqueFractions } from "./milestones.js";
 
 const STORAGE_KEY = "fractional-birthdays-v2";
 const COLORS = ["#ff6b3d", "#8d7cff", "#2dd4bf", "#f4c95d", "#ec77a8", "#6db5ff", "#c084fc", "#84cc16", "#fb7185", "#22d3ee", "#f97316", "#a3e635"];
@@ -12,6 +12,8 @@ const compactMonth = new Intl.DateTimeFormat(undefined, { month: "short", year: 
 let people = loadPeople();
 let calendar = null;
 let editingPersonId = null;
+let selectedView = "list";
+const dualViewQuery = window.matchMedia("(min-width: 1200px)");
 
 function loadPeople() {
   try {
@@ -21,6 +23,11 @@ function loadPeople() {
     const used = new Set();
     let changed = migrated.length !== saved.length;
     for (const person of migrated) {
+      if (!["annual", "monthly", "fractional"].includes(person.milestoneMode)) {
+        person.milestoneMode = person.wholeOnly ? "annual" : "fractional";
+        delete person.wholeOnly;
+        changed = true;
+      }
       const color = String(person.color || "").toLowerCase();
       if (!/^#[0-9a-f]{6}$/.test(color) || used.has(color)) {
         person.color = nextAvailableColor(used);
@@ -37,6 +44,7 @@ function nextAvailableColor(usedColors = new Set(people.map((person) => person.c
   return COLORS.find((color) => !usedColors.has(color.toLowerCase())) || COLORS[people.length % COLORS.length];
 }
 function escapeHtml(value) { return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;"); }
+function plural(value, singular) { return `${value} ${singular}${value === 1 ? "" : "s"}`; }
 function parseBirthday(value) { const [year, month, day] = value.split("-").map(Number); return { year, month: month - 1, day }; }
 function isValidBirthday(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -46,7 +54,7 @@ function isValidBirthday(value) {
 }
 function allEvents() {
   return people.flatMap((person) => generateMilestones(windowRange.start, windowRange.end, parseBirthday(person.birthday))
-    .filter((event) => !person.wholeOnly || event.label === "1/1")
+    .filter((event) => person.milestoneMode === "annual" ? event.label === "1/1" : person.milestoneMode === "monthly" ? isMonthlyFraction(event) : true)
     .map((event) => ({ ...event, id: `${person.id}-${event.id}`, personId: person.id, personName: person.name, color: person.color })))
     .sort((a, b) => a.date - b.date || a.personName.localeCompare(b.personName) || a.age - b.age);
 }
@@ -64,9 +72,6 @@ function glowColor(hex, strength) {
 }
 
 function renderPeople() {
-  document.querySelector("#birthday-count").textContent = String(people.length);
-  const yearlyMilestones = people.reduce((total, person) => total + (person.wholeOnly ? 1 : 46), 0);
-  document.querySelector("#birthday-count-label").textContent = `${people.length === 1 ? "birthday" : "birthdays"} across ${yearlyMilestones} yearly milestones`;
   if (!people.length) {
     document.querySelector("#people-list").innerHTML = '<p class="empty-state empty-state--people">Add a birthday to begin tracking milestones.</p>';
     return;
@@ -74,12 +79,33 @@ function renderPeople() {
   document.querySelector("#people-list").innerHTML = people.map((person) => {
     const birthday = parseBirthday(person.birthday);
     const label = new Date(birthday.year, birthday.month, birthday.day, 12).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });
-    const mode = person.wholeOnly ? " · Annual only" : "";
-    return `<article class="person-chip"><span class="person-dot" style="--person-color:${person.color}"></span><div class="person-details"><strong>${escapeHtml(person.name)}</strong><span>${escapeHtml(label)}${mode}</span></div><div class="person-actions"><button type="button" class="chip-button" data-edit-person="${escapeHtml(person.id)}" aria-label="Edit ${escapeHtml(person.name)}">Edit</button><button type="button" class="chip-button chip-button--danger" data-remove-person="${escapeHtml(person.id)}" aria-label="Remove ${escapeHtml(person.name)}">Remove</button></div></article>`;
+    const mode = person.milestoneMode === "annual" ? " · Real birthday only" : person.milestoneMode === "monthly" ? " · Monthly" : "";
+    const age = calendarAge(birthday, today);
+    const ageLabel = age.totalDays < 0 ? `Born in ${plural(Math.abs(age.totalDays), "day")}` : `${age.totalDays.toLocaleString()} days old · ${plural(age.years, "year")} + ${plural(age.days, "day")} old`;
+    return `<article class="person-chip"><span class="person-dot" style="--person-color:${person.color}"></span><div class="person-details"><strong>${escapeHtml(person.name)}</strong><span>${escapeHtml(label)}${mode}</span><span class="person-age">${escapeHtml(ageLabel)}</span></div><div class="person-actions"><button type="button" class="chip-button" data-edit-person="${escapeHtml(person.id)}" aria-label="Edit ${escapeHtml(person.name)}">Edit</button><button type="button" class="chip-button chip-button--danger" data-remove-person="${escapeHtml(person.id)}" aria-label="Remove ${escapeHtml(person.name)}">Remove</button></div></article>`;
   }).join("");
 }
 function renderList(events) {
   const upcoming = events.filter((event) => event.date >= upcomingRange.start && event.date <= upcomingRange.end);
+  const nextSevenDays = upcoming.filter((event) => { const days = daysFromToday(event.date); return days >= 0 && days < 7; });
+  const eventsByDate = nextSevenDays.reduce((groups, event) => {
+    if (!groups.has(event.dateKey)) groups.set(event.dateKey, []);
+    groups.get(event.dateKey).push(event);
+    return groups;
+  }, new Map());
+  const nextSevenDaysByDate = Array.from({ length: 7 }, (_, offset) => {
+    const date = new Date(today);
+    date.setDate(date.getDate() + offset);
+    const dateKey = toDateKey(date);
+    return { dateKey, date, events: eventsByDate.get(dateKey) || [] };
+  });
+  document.querySelector("#up-next-events").innerHTML = nextSevenDaysByDate.map((day) => {
+    const distance = daysFromToday(day.date);
+    const dayName = distance <= 1 ? relativeLabel(day.date) : day.date.toLocaleDateString(undefined, { weekday: "long" });
+    const calendarDate = day.date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    const dayEvents = day.events.length ? day.events.map((event) => `<span class="up-next__birthday"><i class="person-dot" style="--person-color:${event.color}"></i><span>${escapeHtml(event.personName)} · ${escapeHtml(event.label)}</span></span>`).join("") : '<span class="up-next__none">No milestones</span>';
+    return `<article class="up-next__day"><time datetime="${day.dateKey}"><strong>${escapeHtml(dayName)}</strong><span>${escapeHtml(calendarDate)}</span></time><div class="up-next__birthdays">${dayEvents}</div></article>`;
+  }).join("");
   document.querySelector("#event-count").textContent = String(upcoming.length);
   if (!upcoming.length) { document.querySelector("#event-list").innerHTML = '<p class="empty-state">No milestones remain in this window.</p>'; return; }
   let lastMonth = "";
@@ -88,7 +114,10 @@ function renderList(events) {
     const strength = glowStrength(event.label);
     const glow = strength ? ` event-row--glow` : "";
     const style = strength ? `--event-color:${event.color};--glow-strength:${strength};--event-glow:${glowColor(event.color, strength)}` : "";
-    return `${divider}<article class="event-row${glow}" style="${style}"><time datetime="${event.dateKey}" class="event-date"><span>${escapeHtml(event.date.toLocaleDateString(undefined, { month: "short" }))}</span><strong>${event.date.getDate()}</strong></time><span class="person-dot" style="--person-color:${event.color}"></span><div class="event-info"><strong>${escapeHtml(event.personName)} · ${escapeHtml(event.label)} birthday</strong><span>${escapeHtml(formatAge(event.age))}</span></div><span class="relative-time">${escapeHtml(relativeLabel(event.date))}</span></article>`;
+    const eventDays = daysFromToday(event.date);
+    const compactTime = eventDays < 7 ? " relative-time--compact" : "";
+    const imminent = eventDays <= 1 ? " relative-time--imminent" : "";
+    return `${divider}<article class="event-row${glow}" style="${style}"><time datetime="${event.dateKey}" class="event-date"><span>${escapeHtml(event.date.toLocaleDateString(undefined, { month: "short" }))}</span><strong>${event.date.getDate()}</strong></time><span class="person-dot" style="--person-color:${event.color}"></span><div class="event-info"><strong>${escapeHtml(event.personName)} · ${escapeHtml(event.label)} birthday</strong><span>${escapeHtml(formatAge(event.age))}</span></div><span class="relative-time${compactTime}${imminent}">${escapeHtml(relativeLabel(event.date))}</span></article>`;
   }).join("");
 }
 function renderCalendar(events) {
@@ -100,6 +129,9 @@ function renderCalendar(events) {
     validRange: { start: toDateKey(windowRange.start), end: toDateKey(windowRange.end) },
     headerToolbar: { left: "prev", center: "title", right: "next" }, height: "auto", fixedWeekCount: false, showNonCurrentDates: false, dayMaxEvents: 3,
     events: events.map((event) => ({ id: event.id, title: `${event.personName} · ${event.label}`, start: event.dateKey, allDay: true, backgroundColor: "transparent", borderColor: "transparent", textColor: "#f5f2eb", extendedProps: { color: event.color, glowStrength: glowStrength(event.label), glowColor: glowColor(event.color, glowStrength(event.label)) } })),
+    dayCellDidMount(info) {
+      if (toDateKey(info.date) === toDateKey(today)) info.el.classList.add("calendar-day--today");
+    },
     eventDidMount(info) {
       info.el.classList.add("calendar-event-wrapper");
       info.el.style.setProperty("--fc-event-color", "transparent");
@@ -117,12 +149,21 @@ function renderCalendar(events) {
 }
 function renderAll() { const events = allEvents(); renderPeople(); renderList(events); renderCalendar(events); }
 function setView(view) {
-  const showList = view === "list";
-  document.querySelector("#list-view").hidden = !showList; document.querySelector("#calendar-view").hidden = showList;
-  document.querySelector("#show-list").classList.toggle("is-active", showList); document.querySelector("#show-calendar").classList.toggle("is-active", !showList);
-  document.querySelector("#show-list").setAttribute("aria-pressed", String(showList)); document.querySelector("#show-calendar").setAttribute("aria-pressed", String(!showList));
-  document.querySelector("#view-range").textContent = showList ? upcomingRangeLabel : calendarRangeLabel;
-  if (!showList) requestAnimationFrame(() => calendar?.updateSize());
+  selectedView = view;
+  syncViewVisibility();
+}
+function syncViewVisibility() {
+  const showBoth = dualViewQuery.matches;
+  const showList = showBoth || selectedView === "list";
+  const showCalendar = showBoth || selectedView === "calendar";
+  document.querySelector("#list-view").hidden = !showList;
+  document.querySelector("#calendar-view").hidden = !showCalendar;
+  document.querySelector("#show-list").classList.toggle("is-active", selectedView === "list");
+  document.querySelector("#show-calendar").classList.toggle("is-active", selectedView === "calendar");
+  document.querySelector("#show-list").setAttribute("aria-pressed", String(selectedView === "list"));
+  document.querySelector("#show-calendar").setAttribute("aria-pressed", String(selectedView === "calendar"));
+  document.querySelector("#view-range").textContent = showBoth ? `${upcomingRangeLabel} · Month view alongside` : selectedView === "list" ? upcomingRangeLabel : calendarRangeLabel;
+  if (showCalendar) requestAnimationFrame(() => calendar?.updateSize());
 }
 
 const calendarRangeLabel = `${monthYear.format(windowRange.start)}—${monthYear.format(new Date(windowRange.end.getFullYear(), windowRange.end.getMonth(), 0))}`;
@@ -131,6 +172,7 @@ document.querySelector("#view-range").textContent = upcomingRangeLabel;
 document.querySelector("#fraction-strip").innerHTML = uniqueFractions().map(({ numerator, denominator }) => `<span><sup>${numerator}</sup><i></i><sub>${denominator}</sub></span>`).join("");
 document.querySelector("#show-list").addEventListener("click", () => setView("list"));
 document.querySelector("#show-calendar").addEventListener("click", () => setView("calendar"));
+dualViewQuery.addEventListener("change", syncViewVisibility);
 document.querySelector("#today-button").addEventListener("click", () => calendar?.today());
 document.querySelector("#birthday-form").addEventListener("submit", (event) => {
   event.preventDefault();
@@ -140,7 +182,7 @@ document.querySelector("#birthday-form").addEventListener("submit", (event) => {
   const month = Number(data.get("month"));
   const day = Number(data.get("day"));
   const color = String(data.get("color"));
-  const wholeOnly = data.get("wholeOnly") === "on";
+  const milestoneMode = String(data.get("milestoneMode"));
   const candidate = new Date(year, month - 1, day, 12);
   const isValid = year >= 1 && year <= 9999 && month >= 1 && month <= 12 && day >= 1 && candidate.getFullYear() === year && candidate.getMonth() === month - 1 && candidate.getDate() === day;
   const error = document.querySelector("#birthday-error");
@@ -148,9 +190,9 @@ document.querySelector("#birthday-form").addEventListener("submit", (event) => {
   error.textContent = "";
   const birthday = `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
   if (editingPersonId) {
-    people = people.map((person) => person.id === editingPersonId ? { ...person, name, birthday, color, wholeOnly } : person);
+    people = people.map((person) => person.id === editingPersonId ? { ...person, name, birthday, color, milestoneMode } : person);
   } else {
-    people.push({ id: crypto.randomUUID(), name, birthday, color, wholeOnly });
+    people.push({ id: crypto.randomUUID(), name, birthday, color, milestoneMode });
   }
   savePeople(); resetForm(); renderAll();
 });
@@ -175,7 +217,7 @@ document.querySelector("#people-list").addEventListener("click", (event) => {
     document.querySelector("#birthday-month").value = birthday.month + 1;
     document.querySelector("#birthday-day").value = birthday.day;
     document.querySelector("#birthday-year").value = birthday.year;
-    document.querySelector("#whole-only").checked = Boolean(person.wholeOnly);
+    document.querySelector("#milestone-mode").value = person.milestoneMode || "fractional";
     document.querySelector("#submit-birthday").textContent = "Save changes";
     document.querySelector("#cancel-edit").hidden = false;
     document.querySelector("#person-name").focus();
@@ -188,7 +230,7 @@ document.querySelector("#people-list").addEventListener("click", (event) => {
   savePeople(); renderAll();
 });
 function configJson() {
-  return JSON.stringify({ version: 1, birthdays: people.map(({ id, name, birthday, color, wholeOnly }) => ({ id, name, birthday, color, wholeOnly: Boolean(wholeOnly) })) }, null, 2);
+  return JSON.stringify({ version: 2, birthdays: people.map(({ id, name, birthday, color, milestoneMode }) => ({ id, name, birthday, color, milestoneMode })) }, null, 2);
 }
 document.querySelector("#copy-config").addEventListener("click", async () => {
   const textarea = document.querySelector("#config-data");
@@ -207,7 +249,7 @@ document.querySelector("#load-config").addEventListener("click", () => {
   const status = document.querySelector("#config-status");
   try {
     const parsed = JSON.parse(textarea.value);
-    if (parsed?.version !== 1 || !Array.isArray(parsed.birthdays)) throw new Error("Unsupported config");
+    if (![1, 2].includes(parsed?.version) || !Array.isArray(parsed.birthdays)) throw new Error("Unsupported config");
     const ids = new Set();
     const imported = parsed.birthdays.map((item, index) => {
       const name = String(item?.name || "").trim();
@@ -217,7 +259,8 @@ document.querySelector("#load-config").addEventListener("click", () => {
       while (ids.has(id)) id = crypto.randomUUID();
       ids.add(id);
       const color = /^#[0-9a-f]{6}$/i.test(item.color) ? item.color.toLowerCase() : COLORS[index % COLORS.length];
-      return { id, name, birthday, color, wholeOnly: Boolean(item.wholeOnly) };
+      const milestoneMode = ["annual", "monthly", "fractional"].includes(item.milestoneMode) ? item.milestoneMode : item.wholeOnly ? "annual" : "fractional";
+      return { id, name, birthday, color, milestoneMode };
     });
     people = imported;
     savePeople(); resetForm(); renderAll();
@@ -227,4 +270,5 @@ document.querySelector("#load-config").addEventListener("click", () => {
   }
 });
 document.querySelector("#person-color").value = nextAvailableColor();
+syncViewVisibility();
 renderAll();
