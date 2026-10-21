@@ -1,4 +1,5 @@
 import { calendarAge, generateMilestones, getUpcomingWindow, getWindow, glowStrength, isMonthlyFraction, toDateKey, uniqueFractions } from "./milestones.js";
+import { normalizeConfigText } from "./config.js";
 
 const STORAGE_KEY = "fractional-birthdays-v2";
 const COLORS = ["#ff6b3d", "#8d7cff", "#2dd4bf", "#f4c95d", "#ec77a8", "#6db5ff", "#c084fc", "#84cc16", "#fb7185", "#22d3ee", "#f97316", "#a3e635"];
@@ -244,11 +245,12 @@ document.querySelector("#copy-config").addEventListener("click", async () => {
     status.textContent = "Configuration selected and copied.";
   }
 });
-document.querySelector("#load-config").addEventListener("click", () => {
+function loadConfigText(rawConfig) {
   const textarea = document.querySelector("#config-data");
   const status = document.querySelector("#config-status");
   try {
-    const parsed = JSON.parse(textarea.value);
+    const normalizedConfig = normalizeConfigText(rawConfig);
+    const parsed = JSON.parse(normalizedConfig);
     if (![1, 2].includes(parsed?.version) || !Array.isArray(parsed.birthdays)) throw new Error("Unsupported config");
     const ids = new Set();
     const imported = parsed.birthdays.map((item, index) => {
@@ -264,9 +266,28 @@ document.querySelector("#load-config").addEventListener("click", () => {
     });
     people = imported;
     savePeople(); resetForm(); renderAll();
+    textarea.value = normalizedConfig;
     status.textContent = `Loaded ${people.length} ${people.length === 1 ? "birthday" : "birthdays"}.`;
+    return true;
   } catch {
     status.textContent = "That configuration is not valid.";
+    return false;
+  }
+}
+document.querySelector("#load-config").addEventListener("click", () => {
+  loadConfigText(document.querySelector("#config-data").value);
+});
+document.querySelector("#load-family-config")?.addEventListener("click", async (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  const status = document.querySelector("#config-status");
+  status.textContent = "Loading family birthdays…";
+  try {
+    const response = await fetch("./family-birthdays.json", { cache: "no-store" });
+    if (!response.ok) throw new Error("Family config unavailable");
+    loadConfigText(await response.text());
+  } catch {
+    status.textContent = "The family birthday file could not be loaded.";
   }
 });
 document.querySelector("#person-color").value = nextAvailableColor();

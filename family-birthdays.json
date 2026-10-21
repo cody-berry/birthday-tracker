@@ -1,0 +1,40 @@
+{
+  "version": 2,
+  "birthdays": [
+    {
+      "id": "40f188af-b9dc-4c26-94fd-425471cb38be",
+      "name": "Cody Tian",
+      "birthday": "2014-08-02",
+      "color": "#854000",
+      "milestoneMode": "fractional"
+    },
+    {
+      "id": "8ea22826-7921-448e-9d0e-9806ac50031e",
+      "name": "Winry Tian",
+      "birthday": "2011-01-05",
+      "color": "#e4872f",
+      "milestoneMode": "fractional"
+    },
+    {
+      "id": "5accdb0a-486f-4dd9-8c3b-433837e42d30",
+      "name": "Zane Tian",
+      "birthday": "1982-12-09",
+      "color": "#10c64d",
+      "milestoneMode": "fractional"
+    },
+    {
+      "id": "a1adef8c-1c12-48d2-9d11-29583d167930",
+      "name": "Vicky Liu",
+      "birthday": "1983-11-09",
+      "color": "#ff80dd",
+      "milestoneMode": "fractional"
+    },
+    {
+      "id": "85757d96-d2d9-41d6-a2e6-267554ff8212",
+      "name": "Yoyo Tian",
+      "birthday": "2023-03-28",
+      "color": "#2ae7ea",
+      "milestoneMode": "fractional"
+    }
+  ]
+}

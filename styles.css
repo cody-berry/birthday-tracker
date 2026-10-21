@@ -44,10 +44,15 @@ h2 { margin-bottom:0; font-size:clamp(28px,3vw,42px); font-weight:600; letter-sp
 .person-chip .chip-button--danger { border-color:#68352b; background:#2a1815; color:#ff9d82; }
 .config-panel { margin-top:22px; padding-top:17px; border-top:1px solid var(--line); }
 .config-panel summary { width:max-content; color:var(--muted); cursor:pointer; font:500 10px "DM Mono",monospace; letter-spacing:.1em; text-transform:uppercase; }
+.config-panel summary.config-summary--family { display:flex; width:100%; align-items:center; justify-content:space-between; gap:16px; list-style:none; }
+.config-summary--family>span::before { content:"▸"; margin-right:6px; }
+.config-panel[open] .config-summary--family>span::before { content:"▾"; }
+.family-config-button { min-height:34px; padding:0 13px; border:1px solid var(--accent); border-radius:3px; background:var(--accent); color:#090a0d; cursor:pointer; font-size:10px; font-weight:700; letter-spacing:0; text-transform:none; }
 .config-panel>p { max-width:620px; margin:13px 0 10px; color:var(--muted); font-size:12px; }
 .config-panel textarea { width:100%; min-height:150px; resize:vertical; padding:13px; border:1px solid var(--line); border-radius:3px; outline:none; background:#090a0d; color:#c9cbd2; font:11px/1.55 "DM Mono",monospace; }
 .config-panel textarea:focus { border-color:var(--accent); }
 .config-actions { display:flex; gap:9px; margin-top:9px; }
+.config-actions { flex-wrap:wrap; }
 .config-actions button { min-height:38px; padding:0 14px; border:1px solid #464b58; border-radius:3px; background:#22252d; color:var(--ink); cursor:pointer; font-size:11px; font-weight:700; }
 .config-actions button:last-child { border-color:var(--accent); background:var(--accent); color:#090a0d; }
 .config-panel .config-status { min-height:18px; margin:8px 0 0; color:#a8d8ca; }

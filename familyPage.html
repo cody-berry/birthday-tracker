@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Track 46 fractional birthday milestones for everyone you care about." />
+  <title>Birthday, by fractions</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.2/skeleton.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.2/themes/monarch/theme.css" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="shell" id="top">
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Birthday, by fractions home"><span class="brand-mark" aria-hidden="true">½</span><span>Birthday, by fractions</span></a>
+      <p class="header-note">Annual · monthly · fractional</p>
+    </header>
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div><p class="eyebrow">Fractional birthday tracker</p><h1 id="hero-title">You don’t have to celebrate only on your birthday.</h1><p class="lede">46 excuses to celebrate for every person.</p></div>
+        <aside class="up-next up-next--hero" aria-labelledby="up-next-title"><div class="up-next__heading"><h2 id="up-next-title">Up next</h2><span>Next 7 days</span></div><div class="up-next__events" id="up-next-events" aria-live="polite"></div></aside>
+      </section>
+      <section class="people-panel" aria-labelledby="people-title">
+        <div class="section-heading"><div><p class="eyebrow">Your people</p><h2 id="people-title">Birthdays being tracked</h2></div></div>
+        <form id="birthday-form" class="birthday-form">
+          <label class="name-field"><span>Name</span><input id="person-name" name="name" autocomplete="name" placeholder="e.g. Maya" required /></label>
+          <label class="color-field"><span>Color</span><input id="person-color" name="color" type="color" value="#ff6b3d" aria-label="Birthday color" /></label>
+          <fieldset class="birthday-fields">
+            <legend>Birthday</legend>
+            <label><span class="sr-only">Month</span><input id="birthday-month" name="month" type="number" min="1" max="12" inputmode="numeric" placeholder="Month" required /></label>
+            <label><span class="sr-only">Day</span><input id="birthday-day" name="day" type="number" min="1" max="31" inputmode="numeric" placeholder="Day" required /></label>
+            <label><span class="sr-only">Year</span><input id="birthday-year" name="year" type="number" min="1" max="9999" inputmode="numeric" placeholder="Year" required /></label>
+          </fieldset>
+          <label class="mode-field"><span>Milestones</span><select id="milestone-mode" name="milestoneMode"><option value="annual">Real birthday only</option><option value="monthly">12 monthly birthdays</option><option value="fractional" selected>46 fractional birthdays</option></select></label>
+          <button type="submit" id="submit-birthday">Add birthday</button>
+          <button type="button" class="cancel-button" id="cancel-edit" hidden>Cancel</button>
+        </form>
+        <p class="form-error" id="birthday-error" role="alert"></p>
+        <div class="people-list" id="people-list" aria-live="polite"></div>
+        <details class="config-panel config-panel--family">
+          <summary class="config-summary--family"><span>Portable config</span><button type="button" class="family-config-button" id="load-family-config">Load family birthdays</button></summary>
+          <p>Copy this configuration to move your birthdays to another browser, or paste one here to load it.</p>
+          <textarea id="config-data" spellcheck="false" aria-label="Birthday configuration" placeholder="Paste birthday configuration JSON"></textarea>
+          <div class="config-actions">
+            <button type="button" id="copy-config">Copy current config</button>
+            <button type="button" id="load-config">Load pasted config</button>
+          </div>
+          <p class="config-status" id="config-status" role="status"></p>
+        </details>
+      </section>
+      <section class="events-panel" aria-labelledby="events-title">
+        <div class="events-heading">
+          <div><p class="eyebrow">Milestones</p><h2 id="events-title">What’s coming up</h2><p class="panel-range" id="view-range"></p></div>
+          <div class="view-toggle" role="group" aria-label="Choose milestone view">
+            <button class="view-toggle__button is-active" id="show-list" type="button" aria-pressed="true">List</button>
+            <button class="view-toggle__button" id="show-calendar" type="button" aria-pressed="false">Month</button>
+          </div>
+        </div>
+        <div class="view-panel" id="list-view"><div class="list-summary"><span>Starting today</span><strong><span id="event-count">—</span> events</strong></div><div class="event-list" id="event-list" aria-live="polite"></div></div>
+        <div class="view-panel" id="calendar-view" hidden><div class="calendar-actions"><button class="today-button" id="today-button" type="button">Today</button></div><div id="calendar" aria-label="Monthly fractional birthday calendar"></div></div>
+      </section>
+      <section class="method" aria-labelledby="method-title">
+        <p class="eyebrow">How it works</p><h2 id="method-title">Forty-six distinct moments for every birthday.</h2>
+        <p>Milestones that fall on a whole number of twelfths keep the birth day of the month and are highlighted in the tracker. All other fractional birthdays preserve their exact position between anniversaries, with leap years accounted for.</p>
+        <div class="fraction-strip" id="fraction-strip" aria-label="All 46 unique fractions"></div>
+      </section>
+    </main>
+    <footer><span>More reasons to remember someone.</span></footer>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.2/all/global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.2/themes/monarch/global.js"></script>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { normalizeConfigText } from "../config.js";
 import {
   calendarAge,
   cappedDate,
@@ -12,6 +14,20 @@ import {
 } from "../milestones.js";
 
 const fractions = uniqueFractions();
+const discordConfig = `{\\
+&#x20; "version": 1,\\
+&#x20; "birthdays": []\\
+}`;
+assert.deepEqual(JSON.parse(normalizeConfigText(discordConfig)), { version: 1, birthdays: [] });
+assert.deepEqual(JSON.parse(normalizeConfigText('```json\n{"version":2,"birthdays":[]}\n```')), { version: 2, birthdays: [] });
+const familyConfig = JSON.parse(await readFile(new URL("../family-birthdays.json", import.meta.url), "utf8"));
+assert.equal(familyConfig.version, 2);
+assert.equal(familyConfig.birthdays.length, 5);
+assert.ok(familyConfig.birthdays.every((person) => person.milestoneMode === "fractional"));
+const indexHtml = await readFile(new URL("../index.html", import.meta.url), "utf8");
+const familyHtml = await readFile(new URL("../familyPage.html", import.meta.url), "utf8");
+assert.ok(!indexHtml.includes('id="load-family-config"'), "the generic page must not expose the family loader");
+assert.ok(familyHtml.includes('id="load-family-config"'), "the family page must expose the family loader");
 assert.equal(fractions.length, 46, "there should be exactly 46 unique reduced fractions");
 assert.equal(fractions[0].numerator, 1);
 assert.equal(fractions[0].denominator, 12);
